@@ -1,12 +1,12 @@
 <template>
-  <form @submit.prevent="getRepos" class="search-block">
+  <form @submit.prevent="getUserInfo" class="search-block">
     <Search
       @search="search = $event"
       :value="search"
       placeholder="Type user name..."
     />
     <button
-      v-if="!error && repos"
+      v-if="!error && user"
       class="btn btnPrimary btn-search"
       type="submit"
     >
@@ -36,8 +36,17 @@
     </div>
   </div>
   <ul class="repo" v-if="repos">
-    <h2 class="repo-title">Repos:</h2>
-    <li v-for="repo in repos" :key="repo.id" class="repo__item">
+    <div class="repo-titles">
+      <div @click="sort('name')" class="repo-titles__item">
+        <h2 class="repo-title">Repos</h2>
+        <img src="@/assets/img/arrow-down.svg" alt="arrow down" />
+      </div>
+      <div @click="sort('stargazers_count')" class="repo-titles__item">
+        <h2 class="repo-title">Stars</h2>
+        <img src="@/assets/img/arrow-down.svg" alt="arrow down" />
+      </div>
+    </div>
+    <li v-for="repo in reposSort" :key="repo.id" class="repo__item">
       <div class="repo__info">
         <a class="link" target="_blank" :href="repo.html_url"
           >{{ repo.name }}
@@ -61,14 +70,24 @@ export default {
       search: '',
       error: null,
       user: null,
-      repos: null
+      repos: null,
+      currentSort: 'name',
+      currentSortDir: 'asc'
+    }
+  },
+  computed: {
+    reposSort() {
+      return this.repos.sort((a, b) => {
+        let mod = 1
+        if (this.currentSortDir === 'desc') mod = -1
+        if (a[this.currentSort] < b[this.currentSort]) return -1 * mod
+        if (a[this.currentSort] > b[this.currentSort]) return 1 * mod
+        return 0
+      })
     }
   },
   methods: {
-    // async getUser() {
-
-    // },
-    async getRepos() {
+    async getUserInfo() {
       await fetch(`https://api.github.com/users/${this.search}`)
         .then(response => {
           if (!response.ok) {
@@ -102,6 +121,14 @@ export default {
           this.repos = null
           this.error = error.message
         })
+    },
+    sort(e) {
+      if (e === this.currentSort) {
+        this.currentSortDir = this.currentSortDir === 'asc' ? 'desc' : 'asc'
+      } else {
+        this.currentSort = e
+        this.currentSortDir = 'asc'
+      }
     }
   }
 }
@@ -119,12 +146,7 @@ export default {
   margin: 0 auto;
   width: 50%;
 }
-.repo-title {
-  margin: 20px auto 10px;
-  width: 100%;
-  max-width: 500px;
-  font-weight: 700;
-}
+
 .user {
   margin: 0px auto 30px;
   width: 100%;
@@ -156,6 +178,22 @@ export default {
       }
     }
   }
+}
+.repo-titles {
+  margin: 10px 0 20px;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  &__item {
+    display: flex;
+    cursor: pointer;
+  }
+}
+.repo-title {
+  margin-right: 10px;
+  font-weight: 700;
 }
 .repo {
   margin: 0px auto 30px;
