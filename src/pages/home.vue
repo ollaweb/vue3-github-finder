@@ -56,6 +56,22 @@
       </div>
     </li>
   </ul>
+  <button
+    v-if="repos && page.current < Math.ceil(repos.length / page.length)"
+    @click="showMore"
+    class="btn btnPrimary btn-show-more"
+    type="button"
+  >
+    Show more
+  </button>
+  <button
+    v-if="repos && page.current === Math.ceil(repos.length / page.length)"
+    @click="showLess"
+    class="btn btnPrimary btn-show-less"
+    type="button"
+  >
+    Show less
+  </button>
 </template>
 
 <script>
@@ -72,18 +88,27 @@ export default {
       user: null,
       repos: null,
       currentSort: 'name',
-      currentSortDir: 'asc'
+      currentSortDir: 'asc',
+      page: {
+        current: 1,
+        length: 5
+      }
     }
   },
   computed: {
     reposSort() {
-      return this.repos.sort((a, b) => {
-        let mod = 1
-        if (this.currentSortDir === 'desc') mod = -1
-        if (a[this.currentSort] < b[this.currentSort]) return -1 * mod
-        if (a[this.currentSort] > b[this.currentSort]) return 1 * mod
-        return 0
-      })
+      return this.repos
+        .filter((row, index) => {
+          let end = this.page.current * this.page.length
+          if (index >= 0 && index < end) return true
+        })
+        .sort((a, b) => {
+          let mod = 1
+          if (this.currentSortDir === 'desc') mod = -1
+          if (a[this.currentSort] < b[this.currentSort]) return -1 * mod
+          if (a[this.currentSort] > b[this.currentSort]) return 1 * mod
+          return 0
+        })
     }
   },
   methods: {
@@ -129,6 +154,13 @@ export default {
         this.currentSort = e
         this.currentSortDir = 'asc'
       }
+    },
+    showMore() {
+      if (this.page.current * this.page.length < this.repos.length)
+        this.page.current += 1
+    },
+    showLess() {
+      this.page.current = 1
     }
   }
 }
@@ -145,6 +177,16 @@ export default {
 .btn-search {
   margin: 0 auto;
   width: 50%;
+}
+.btn-show-more {
+  margin: 0 auto;
+}
+.btn.btnPrimary {
+  &.btn-show-less {
+    margin: 0 auto;
+    border: none;
+    background-color: rgba(73, 76, 232, 0.5);
+  }
 }
 
 .user {
